@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <title>Pong</title>
+    <meta charset="UTF-8">
+    <link rel="icon" href="favicon.ico?v=1" />
+    <meta name="theme-color" content="#5a5d7a">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" type="text/css" href="style.css?v=1">
+</head>
+
+<body>
+    <div id="registerContainer">
+        <form>
+            <label for="myIdForm">Register ID:</label><br />
+            <input type="text" id="myIdForm" name="myIdForm"><br />
+        </form>
+
+        <br />
+        <button onclick="register()">register</button>
+
+        <div id="registerError"></div>
+    </div>
+
+    <div id="connectContainer">
+        <div id="myIdLabel"></div>
+
+        <br />
+        <form>
+            <label for="otherIdForm">Connect to ID:</label><br />
+            <input type="text" id="otherIdForm" name="otherIdForm"><br />
+        </form>
+
+        <br />
+        <button onclick="connect()">connect</button>
+
+        <div id="connectError"></div>
+    </div>
+
+    <div id="mainContainer">
+        <div id="infoLabel"></div>
+        <form>
+            <label for="messageForm">Message:</label><br />
+            <input type="text" id="messageForm" name="messageForm"><br />
+        </form>
+
+        <br />
+        <button onclick="send()">send</button>
+
+        <br />
+        <ul id="messagesList"></ul>
+    </div>
+</body>
+<script src="peerjs.min.js"></script>
+<script src="rtc.js"></script>
+
+</html>
