@@ -8,40 +8,32 @@
     <meta name="theme-color" content="#5a5d7a">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" type="text/css" href="style.css?v=1">
+    <link rel="stylesheet" type="text/css" href="bootstrap.min.css">
 </head>
 
 <body>
     <div id="registerContainer">
         <form>
-            <label for="myIdForm">Register ID:</label><br />
-            <input type="text" id="myIdForm" name="myIdForm"><br />
+            <label for="myIdForm">Enter you name</label>
+            <input type="text" class="form-control" id="myIdForm" name="myIdForm" autofocus>
         </form>
-
-        <br />
-        <button onclick="register()">register</button>
-
-        <div id="registerError"></div>
+        <button id="registerButton" class="btn btn-primary mt-3" onclick="register()">Enter</button>
     </div>
 
     <div id="connectContainer">
-        <div id="myIdLabel"></div>
-
-        <br />
         <form>
-            <label for="otherIdForm">Connect to ID:</label><br />
-            <input type="text" id="otherIdForm" name="otherIdForm"><br />
+            <label id="otherIdFormLabel" for="otherIdForm"></label>
+            <input type="text" class="form-control" id="otherIdForm" name="otherIdForm">
         </form>
-
-        <br />
-        <button onclick="connect()">connect</button>
-
-        <div id="connectError"></div>
+        <div id="connectionSpinner" class="spinner-border text-primary mt-3" role="status">
+            <span class="sr-only">Loading...</span>
+        </div>
+        <button id="connectButton" class="btn btn-primary mt-3" onclick="connect()">Connect</button>
     </div>
 
     <div id="mainContainer">
         <canvas id="myCanvas" width="300" height="400"></canvas>
-        <br>
-        <button id="startGame">start</button>
+        <button class="btn btn-primary mt-3" id="startGame">Start</button>
         <div id="infoLabel"></div>
     </div>
 </body>

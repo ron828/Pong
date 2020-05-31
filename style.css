@@ -1,5 +1,24 @@
+html, body {
+    height: 100%;
+    margin: 0;
+}
+
+body {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
 #connectContainer, #mainContainer {
     display: none;
 }
 
-canvas { background: #eee; }
+#connectionSpinner {
+    display: none;
+}
+
+canvas { 
+    display: block;
+    margin: 10px;
+    background: #eee;
+}

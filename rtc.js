@@ -3,22 +3,34 @@ connectContainer = document.getElementById("connectContainer");
 mainContainer = document.getElementById("mainContainer");
 myIdField = document.getElementById("myIdForm");
 otherIdForm = document.getElementById("otherIdForm");
-myIdLabel = document.getElementById("myIdLabel");
-registerError = document.getElementById("registerError");
-connectError = document.getElementById("connectError");
+otherIdFormLabel = document.getElementById("otherIdFormLabel");
 infoLabel = document.getElementById("infoLabel");
+
+myIdField.addEventListener("keydown", function (event) {
+    if (event.keyCode === 13) {
+        event.preventDefault();
+        document.getElementById("registerButton").click();
+    }
+});
+
+otherIdForm.addEventListener("keydown", function (event) {
+    if (event.keyCode === 13) {
+        event.preventDefault();
+        document.getElementById("connectButton").click();
+    }
+});
 
 var peer = null;
 var dataConnection = null;
 
 function register() {
-    registerError.innerHTML = "";
-
     if (!myIdField.value) {
-        registerError.innerHTML = "ID Field Blank!";
+        alert("Name is blank!");
         return;
     }
 
+    document.getElementById("myIdForm").disabled = true;
+    document.getElementById("registerButton").disabled = true;
     peer = new Peer(myIdField.value, {
         host: 'ron828.com',
         port: 9000,
@@ -30,11 +42,17 @@ function register() {
     peer.on('open', (id) => {
         registercontainer.style.display = "none";
         connectContainer.style.display = "block";
-        myIdLabel.innerHTML = "Your ID: " + id;
+        otherIdFormLabel.innerHTML = id + ", who would you like to play with?";
+        otherIdForm.focus();
     });
 
     peer.on('error', (err) => {
-        registerError.innerHTML = err;
+        alert(err);
+        otherIdForm.disabled = false;
+        document.getElementById("connectButton").disabled = false;
+        document.getElementById("connectionSpinner").style.display = "none";
+        document.getElementById("myIdForm").disabled = false;
+    document.getElementById("registerButton").disabled = false;
     });
 
     peer.on('connection', (conn) => {
@@ -47,16 +65,14 @@ function register() {
 }
 
 function connect() {
-    if (Object.keys(peer.connections).length > 0) {
-        connectError.innerHTML = "Already connected!";
-        return;
-    }
-
     if (!otherIdForm.value) {
-        connectError.innerHTML = "Other ID Blank!";
+        alert("Name is blank!");
         return;
     }
 
+    otherIdForm.disabled = true;
+    document.getElementById("connectButton").disabled = true;
+    document.getElementById("connectionSpinner").style.display = "block";
     dataConnection = peer.connect(otherIdForm.value);
     initConnection();
 
@@ -71,7 +87,6 @@ function connect() {
 
 function initConnection() {
     dataConnection.on('error', (err) => {
-        connectError.innerHTML = err;
         infoLabel.innerHTML = err;
     });
 
@@ -85,7 +100,7 @@ function initConnection() {
         else if (data[0] == 'moveball') {
             game.ball.move(data[1], data[2]);
         }
-        
+
         infoLabel.innerHTML = "Connected to " + dataConnection.peer;
     });
 }
@@ -113,6 +128,12 @@ class Ball {
         this.x = x;
         this.y = y;
         this.draw();
+    }
+
+    reset() {
+        this.move(canvas.width / 2, canvas.height / 2);
+        this.dx = 2;
+        this.dy = 2;
     }
 }
 
@@ -162,15 +183,19 @@ class Game {
         this.interval = null;
 
         canvas.addEventListener('mousemove', e => {
-            this.p1.move(e.clientX);
-            dataConnection.send(['movepad', canvas.width - e.clientX]);
+            var rect = canvas.getBoundingClientRect();
+            var newX = e.clientX - rect.x;
+            this.p1.move(newX);
+            dataConnection.send(['movepad', canvas.width - newX]);
         });
 
         canvas.addEventListener('touchmove', e => {
             if (e.targetTouches.length == 1) {
                 var touch = event.targetTouches[0];
-                this.p1.move(touch.pageX);
-                dataConnection.send(['movepad', canvas.width - touch.pageX]);
+                var rect = canvas.getBoundingClientRect();
+                var newX = touch.pageX - rect.x;
+                this.p1.move(newX);
+                dataConnection.send(['movepad', canvas.width - newX]);
             }
         });
     }
@@ -199,6 +224,7 @@ class Game {
             }
             else {
                 clearInterval(this.interval);
+                this.ball.reset();
             }
         }
 
@@ -208,6 +234,7 @@ class Game {
             }
             else {
                 clearInterval(this.interval);
+                this.ball.reset();
             }
         }
 
