@@ -1,3 +1,5 @@
 #connectContainer, #mainContainer {
     display: none;
 }
+
+canvas { background: #eee; }

@@ -39,17 +39,10 @@
     </div>
 
     <div id="mainContainer">
+        <canvas id="myCanvas" width="300" height="400"></canvas>
+        <br>
+        <button id="startGame">start</button>
         <div id="infoLabel"></div>
-        <form>
-            <label for="messageForm">Message:</label><br />
-            <input type="text" id="messageForm" name="messageForm"><br />
-        </form>
-
-        <br />
-        <button onclick="send()">send</button>
-
-        <br />
-        <ul id="messagesList"></ul>
     </div>
 </body>
 <script src="peerjs.min.js"></script>
