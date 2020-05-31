@@ -17,6 +17,9 @@
             <label for="myIdForm">Enter you name</label>
             <input type="text" class="form-control" id="myIdForm" name="myIdForm" autofocus>
         </form>
+        <div id="registrationSpinner" class="spinner-border text-primary mt-3" role="status">
+            <span class="sr-only">Loading...</span>
+        </div>
         <button id="registerButton" class="btn btn-primary mt-3" onclick="register()">Enter</button>
     </div>
 
@@ -32,9 +35,12 @@
     </div>
 
     <div id="mainContainer">
+        <div id="scoreContainer">
+            <div id="player1Score">0</div>
+            <div id="player2Score">0</div>
+        </div>
         <canvas id="myCanvas" width="300" height="400"></canvas>
-        <button class="btn btn-primary mt-3" id="startGame">Start</button>
-        <div id="infoLabel"></div>
+        <button class="btn btn-dark mt-3" id="startGame">Start</button>
     </div>
 </body>
 <script src="peerjs.min.js"></script>
