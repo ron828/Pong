@@ -22,7 +22,7 @@ body {
     background-color: #212c3d;
 }
 
-#connectionSpinner, #registrationSpinner {
+#connectionSpinner, #registrationSpinner, #readySpinner {
     display: none;
 }
 
@@ -40,4 +40,10 @@ body {
 canvas { 
     display: block;
     background: #111a28;
+}
+
+#readyContainer {
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }

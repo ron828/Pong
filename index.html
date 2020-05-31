@@ -40,7 +40,13 @@
             <div id="player2Score">0</div>
         </div>
         <canvas id="myCanvas" width="300" height="400"></canvas>
-        <button class="btn btn-dark mt-3" id="startGame">Start</button>
+        <div id="readyContainer">
+            <div id="readySpinner" class="spinner-border text-primary mt-3 mr-3" role="status">
+                <span class="sr-only">Loading...</span>
+            </div>
+            <button class="btn btn-dark mt-3" id="readyButton">Ready</button>
+        </div>
+
     </div>
 </body>
 <script src="peerjs.min.js"></script>

@@ -95,6 +95,17 @@ function initConnection() {
             game = new Game();
             game.init();
         }
+        else if (data[0] == 'ready') {
+            game.p2.ready = true;
+            if (game.p1.ready) {
+                dataConnection.send(['starting']);
+                game.start();
+            }
+        }
+        else if (data[0] == 'starting') {
+            document.getElementById('readySpinner').style.display = 'none';
+            readyGameButton.disabled = true;
+        }
         else if (data[0] == 'movepad') {
             game.p2.move(data[1]);
         }
@@ -107,6 +118,9 @@ function initConnection() {
             game.p2.points = data[2];
             document.getElementById("player1Score").innerHTML = game.p1.name + ": " + game.p1.points;
             document.getElementById("player2Score").innerHTML = game.p2.name + ": " + game.p2.points;
+            game.p1.ready = false;
+            game.p2.ready = false;
+            readyGameButton.disabled = false;
         }
     });
 }
@@ -117,8 +131,8 @@ class Ball {
         this.x = canvas.width / 2;
         this.y = canvas.height / 2;
         this.radius = 4;
-        this.dx = 2;
-        this.dy = 2;
+        this.dx = 3;
+        this.dy = 3;
     }
 
     draw() {
@@ -145,6 +159,7 @@ class Ball {
 
 class Player {
     constructor(location) {
+        this.ready = false;
         this.height = 6;
         this.width = 60;
         this.color = "#ffffff";
@@ -192,6 +207,7 @@ class Game {
         this.p2 = new Player("up");
         this.ball = new Ball();
         this.interval = null;
+        this.started = false;
 
         canvas.addEventListener('mousemove', e => {
             var rect = canvas.getBoundingClientRect();
@@ -215,12 +231,31 @@ class Game {
         this.p1.draw();
         this.p2.draw();
         this.ball.draw();
+        this.p1.ready = false;
+        this.p2.ready = false;
         document.getElementById("player1Score").innerHTML = this.p1.name + ": " + this.p1.points;
         document.getElementById("player2Score").innerHTML = this.p2.name + ": " + this.p2.points;
+        readyGameButton.disabled = false;
+    }
+
+    ready() {
+        document.getElementById('readySpinner').style.display = 'block';
+        readyGameButton.disabled = true;
+        this.p1.ready = true;
+        if (this.p2.ready) {
+            game.start();
+            dataConnection.send(['starting']);
+        }
+        else {
+            dataConnection.send(['ready']);
+        }
     }
 
     start() {
         this.init();
+        this.started = true;
+        document.getElementById('readySpinner').style.display = 'none';
+        readyGameButton.disabled = true;
         this.interval = setInterval(() => { this.moveBall(); }, 20);
     }
 
@@ -233,27 +268,37 @@ class Game {
         var pad2RightEdge = this.p2.x + (this.p2.width / 2)
         if (this.ball.y + this.ball.dy > (canvas.height - (this.ball.radius + this.p1.height))) {
             if (ballLeftEdge <= pad1RightEdge && ballRightEdge >= pad1LeftEdge) {
+                this.ball.dx += 1;
+                this.ball.dy += 1;
                 this.ball.dy = -this.ball.dy;
             }
             else {
                 this.p2.points += 1;
                 document.getElementById("player2Score").innerHTML = this.p2.name + ": " + this.p2.points;
                 dataConnection.send(['scoreupdate', this.p2.points, this.p1.points]);
+                this.p1.ready = false;
+                this.p2.ready = false;
                 clearInterval(this.interval);
                 this.ball.reset();
+                readyGameButton.disabled = false;
             }
         }
 
         if (this.ball.y + this.ball.dy < (this.ball.radius + this.p2.height)) {
             if (ballLeftEdge <= pad2RightEdge && ballRightEdge >= pad2LeftEdge) {
+                this.ball.dx += 1;
+                this.ball.dy += 1;
                 this.ball.dy = -this.ball.dy;
             }
             else {
                 this.p1.points += 1;
                 document.getElementById("player1Score").innerHTML = this.p1.name + ": " + this.p1.points;
                 dataConnection.send(['scoreupdate', this.p2.points, this.p1.points]);
+                this.p1.ready = false;
+                this.p2.ready = false;
                 clearInterval(this.interval);
                 this.ball.reset();
+                readyGameButton.disabled = false;
             }
         }
 
@@ -270,6 +315,6 @@ class Game {
 
 var canvas = document.getElementById("myCanvas");
 var ctx = canvas.getContext("2d");
-var startGameButton = document.getElementById("startGame");
+var readyGameButton = document.getElementById("readyButton");
 var game;
-startGameButton.addEventListener("click", () => { game.start(); });
+readyGameButton.addEventListener("click", () => { game.ready(); });
