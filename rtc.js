@@ -114,6 +114,9 @@ function initConnection() {
             readyGameButton.disabled = true;
             document.getElementById("readyContainer").style.display = "none";
         }
+        else if (data[0] == 'restart') {
+            game.restart();
+        }
         else if (data[0] == 'ballmoved') {
             if (game.paused) {
                 return;
@@ -138,6 +141,12 @@ function initConnection() {
             game.p2.ready = false;
             readyGameButton.disabled = false;
             document.getElementById("readyContainer").style.display = "flex";
+
+            if (game.p1.points == 5 || game.p2.points == 5) {
+                document.getElementById("gameOverContainer").style.display = "flex";
+                document.getElementById("winnerLabel").innerHTML = (game.p1.points == 5 ? game.p1.name : game.p2.name);
+                document.getElementById("winnerLabel").innerHTML += " wins this round!";
+            }
         }
     });
 }
@@ -283,6 +292,19 @@ class Game {
         this.moveBall();
     }
 
+    restart(notify) {
+        document.getElementById("gameOverContainer").style.display = "none";
+        this.p1.points = 0;
+        this.p2.points = 0;
+        this.ball.speed = 7;
+        document.getElementById("player1Score").innerHTML = this.p1.name + ": " + this.p1.points;
+        document.getElementById("player2Score").innerHTML = this.p2.name + ": " + this.p2.points;
+
+        if (notify) {
+            dataConnection.send(['restart']);
+        }   
+    }
+
     moveBall() {
         var ballLeftEdge = this.ball.x - this.ball.radius;
         var ballRightEdge = this.ball.x + this.ball.radius;
@@ -309,6 +331,11 @@ class Game {
                 this.paused = true;
                 readyGameButton.disabled = false;
                 document.getElementById("readyContainer").style.display = "flex";
+                if (game.p1.points == 5 || game.p2.points == 5) {
+                    document.getElementById("gameOverContainer").style.display = "flex";
+                    document.getElementById("winnerLabel").innerHTML = (game.p1.points == 5 ? game.p1.name : game.p2.name);
+                    document.getElementById("winnerLabel").innerHTML += " wins this round!";
+                }
             }
         }
 
@@ -331,6 +358,11 @@ class Game {
                 this.paused = true;
                 readyGameButton.disabled = false;
                 document.getElementById("readyContainer").style.display = "flex";
+                if (game.p1.points == 5 || game.p2.points == 5) {
+                    document.getElementById("gameOverContainer").style.display = "flex";
+                    document.getElementById("winnerLabel").innerHTML = (game.p1.points == 5 ? game.p1.name : game.p2.name);
+                    document.getElementById("winnerLabel").innerHTML += " wins this round!";
+                }
             }
         }
 
@@ -351,3 +383,4 @@ var readyGameButton = document.getElementById("readyButton");
 var game;
 var reloading = false;
 readyGameButton.addEventListener("click", () => { game.ready(); });
+document.getElementById("nextRoundButton").addEventListener("click", () => { game.restart(true); })
