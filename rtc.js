@@ -113,11 +113,18 @@ function initConnection() {
             document.getElementById('readySpinner').style.display = 'none';
             readyGameButton.disabled = true;
         }
+        else if (data[0] == 'ballmoved') {
+            if (game.paused) {
+                return;
+            }
+            game.moveBall();
+        }
         else if (data[0] == 'movepad') {
             game.p2.move(data[1]);
         }
         else if (data[0] == 'moveball') {
             game.ball.move(data[1], data[2]);
+            dataConnection.send(['ballmoved']);
         }
 
         else if (data[0] == 'scoreupdate') {
@@ -138,9 +145,9 @@ class Ball {
         this.x = canvas.width / 2;
         this.y = canvas.height / 2;
         this.radius = 4;
-        this.dx = 3;
-        this.dy = 3;
-        this.speed = 4;
+        this.dx = 5;
+        this.dy = 5;
+        this.speed = 7;
     }
 
     draw() {
@@ -160,8 +167,9 @@ class Ball {
 
     reset() {
         this.move(canvas.width / 2, canvas.height / 2);
-        this.dx = 3;
-        this.dy = 3;
+        this.dx = 5;
+        this.dy = 5;
+        this.speed = 7;
     }
 }
 
@@ -214,8 +222,7 @@ class Game {
         this.p1 = new Player("down");
         this.p2 = new Player("up");
         this.ball = new Ball();
-        this.interval = null;
-        this.started = false;
+        this.paused = true;
 
         canvas.addEventListener('mousemove', e => {
             var rect = canvas.getBoundingClientRect();
@@ -262,10 +269,10 @@ class Game {
 
     start() {
         this.init();
-        this.started = true;
+        this.paused = false;
         document.getElementById('readySpinner').style.display = 'none';
         readyGameButton.disabled = true;
-        this.interval = setInterval(() => { this.moveBall(); }, 20);
+        this.moveBall();
     }
 
     moveBall() {
@@ -282,7 +289,7 @@ class Game {
                 let angleRad = (Math.PI/4) * collidePoint;
                 this.ball.dy = -Math.cos(angleRad) * this.ball.speed;
                 this.ball.dx = Math.sin(angleRad) * this.ball.speed;
-                this.ball.speed += 0.1;
+                this.ball.speed += 0.5;
             }
             else {
                 this.p2.points += 1;
@@ -290,8 +297,8 @@ class Game {
                 dataConnection.send(['scoreupdate', this.p2.points, this.p1.points]);
                 this.p1.ready = false;
                 this.p2.ready = false;
-                clearInterval(this.interval);
                 this.ball.reset();
+                this.paused = true;
                 readyGameButton.disabled = false;
             }
         }
@@ -303,7 +310,7 @@ class Game {
                 let angleRad = (Math.PI/4) * collidePoint;
                 this.ball.dy = Math.cos(angleRad) * this.ball.speed;
                 this.ball.dx = Math.sin(angleRad) * this.ball.speed;
-                this.ball.speed += 0.1;
+                this.ball.speed += 0.5;
             }
             else {
                 this.p1.points += 1;
@@ -311,8 +318,8 @@ class Game {
                 dataConnection.send(['scoreupdate', this.p2.points, this.p1.points]);
                 this.p1.ready = false;
                 this.p2.ready = false;
-                clearInterval(this.interval);
                 this.ball.reset();
+                this.paused = true;
                 readyGameButton.disabled = false;
             }
         }
