@@ -112,12 +112,13 @@ function initConnection() {
         else if (data[0] == 'starting') {
             document.getElementById('readySpinner').style.display = 'none';
             readyGameButton.disabled = true;
+            document.getElementById("readyContainer").style.display = "none";
         }
         else if (data[0] == 'ballmoved') {
             if (game.paused) {
                 return;
             }
-            game.moveBall();
+            setTimeout(() => { game.moveBall(); }, 20);
         }
         else if (data[0] == 'movepad') {
             game.p2.move(data[1]);
@@ -135,6 +136,7 @@ function initConnection() {
             game.p1.ready = false;
             game.p2.ready = false;
             readyGameButton.disabled = false;
+            document.getElementById("readyContainer").style.display = "flex";
         }
     });
 }
@@ -231,7 +233,7 @@ class Game {
             dataConnection.send(['movepad', canvas.width - newX]);
         });
 
-        canvas.addEventListener('touchmove', e => {
+        mainContainer.addEventListener('touchmove', e => {
             if (e.targetTouches.length == 1) {
                 var touch = event.targetTouches[0];
                 var rect = canvas.getBoundingClientRect();
@@ -272,6 +274,7 @@ class Game {
         this.paused = false;
         document.getElementById('readySpinner').style.display = 'none';
         readyGameButton.disabled = true;
+        document.getElementById("readyContainer").style.display = "none";
         this.moveBall();
     }
 
@@ -300,6 +303,7 @@ class Game {
                 this.ball.reset();
                 this.paused = true;
                 readyGameButton.disabled = false;
+                document.getElementById("readyContainer").style.display = "flex";
             }
         }
 
@@ -321,6 +325,7 @@ class Game {
                 this.ball.reset();
                 this.paused = true;
                 readyGameButton.disabled = false;
+                document.getElementById("readyContainer").style.display = "flex";
             }
         }
 
