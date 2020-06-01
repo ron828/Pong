@@ -48,12 +48,13 @@ function register() {
     });
 
     peer.on('error', (err) => {
+        if (reloading) {
+            return;
+        }
+        reloading = true;
         alert(err);
-        otherIdForm.disabled = false;
-        document.getElementById("connectButton").disabled = false;
-        document.getElementById("connectionSpinner").style.display = "none";
-        document.getElementById("myIdForm").disabled = false;
-    document.getElementById("registerButton").disabled = false;
+        console.log(err);
+        location.reload();
     });
 
     peer.on('connection', (conn) => {
@@ -87,7 +88,13 @@ function connect() {
 
 function initConnection() {
     dataConnection.on('error', (err) => {
+        if (reloading) {
+            return;
+        }
+        reloading = true;
+        alert('Connection lost.');
         console.log(err);
+        location.reload();
     });
 
     dataConnection.on('data', (data) => {
@@ -233,6 +240,7 @@ class Game {
         this.ball.draw();
         this.p1.ready = false;
         this.p2.ready = false;
+        reloading = false;
         document.getElementById("player1Score").innerHTML = this.p1.name + ": " + this.p1.points;
         document.getElementById("player2Score").innerHTML = this.p2.name + ": " + this.p2.points;
         readyGameButton.disabled = false;
@@ -268,8 +276,6 @@ class Game {
         var pad2RightEdge = this.p2.x + (this.p2.width / 2)
         if (this.ball.y + this.ball.dy > (canvas.height - (this.ball.radius + this.p1.height))) {
             if (ballLeftEdge <= pad1RightEdge && ballRightEdge >= pad1LeftEdge) {
-                this.ball.dx += 1;
-                this.ball.dy += 1;
                 this.ball.dy = -this.ball.dy;
             }
             else {
@@ -286,8 +292,6 @@ class Game {
 
         if (this.ball.y + this.ball.dy < (this.ball.radius + this.p2.height)) {
             if (ballLeftEdge <= pad2RightEdge && ballRightEdge >= pad2LeftEdge) {
-                this.ball.dx += 1;
-                this.ball.dy += 1;
                 this.ball.dy = -this.ball.dy;
             }
             else {
@@ -317,4 +321,5 @@ var canvas = document.getElementById("myCanvas");
 var ctx = canvas.getContext("2d");
 var readyGameButton = document.getElementById("readyButton");
 var game;
+var reloading = false;
 readyGameButton.addEventListener("click", () => { game.ready(); });
