@@ -118,7 +118,7 @@ function initConnection() {
             if (game.paused) {
                 return;
             }
-            setTimeout(() => { game.moveBall(); }, 20);
+            setTimeout(() => { game.moveBall(); }, 10);
         }
         else if (data[0] == 'movepad') {
             game.p2.move(data[1]);
@@ -131,6 +131,7 @@ function initConnection() {
         else if (data[0] == 'scoreupdate') {
             game.p1.points = data[1];
             game.p2.points = data[2];
+            game.ball.speed = data[3];
             document.getElementById("player1Score").innerHTML = game.p1.name + ": " + game.p1.points;
             document.getElementById("player2Score").innerHTML = game.p2.name + ": " + game.p2.points;
             game.p1.ready = false;
@@ -147,9 +148,9 @@ class Ball {
         this.x = canvas.width / 2;
         this.y = canvas.height / 2;
         this.radius = 4;
-        this.dx = 5;
-        this.dy = 5;
         this.speed = 7;
+        this.dx = 0;
+        this.dy = this.speed;      
     }
 
     draw() {
@@ -169,9 +170,8 @@ class Ball {
 
     reset() {
         this.move(canvas.width / 2, canvas.height / 2);
-        this.dx = 5;
-        this.dy = 5;
-        this.speed = 7;
+        this.dx = 0;
+        this.dy = this.speed;
     }
 }
 
@@ -182,6 +182,7 @@ class Player {
         this.width = 60;
         this.color = "#ffffff";
         this.x = canvas.width / 2;
+        this.prevX = this.x;
 
         this.name = '';
         if (location == "down") {
@@ -205,7 +206,7 @@ class Player {
         ctx.closePath();
     }
 
-    move(newX) {
+    move(newX, sendMove) {
         ctx.clearRect(0, this.y, canvas.width, this.height);
         this.x = newX;
         if (this.x < this.width / 2) {
@@ -216,7 +217,13 @@ class Player {
             this.x = canvas.width - (this.width / 2);
         }
         this.draw();
+
+        if (sendMove && Math.abs(this.x - this.prevX) > 4) {
+            dataConnection.send(['movepad', canvas.width - this.x]);
+            this.prevX = this.x;
+        }
     }
+
 }
 
 class Game {
@@ -229,8 +236,7 @@ class Game {
         canvas.addEventListener('mousemove', e => {
             var rect = canvas.getBoundingClientRect();
             var newX = e.clientX - rect.x;
-            this.p1.move(newX);
-            dataConnection.send(['movepad', canvas.width - newX]);
+            this.p1.move(newX, true);
         });
 
         mainContainer.addEventListener('touchmove', e => {
@@ -238,8 +244,7 @@ class Game {
                 var touch = event.targetTouches[0];
                 var rect = canvas.getBoundingClientRect();
                 var newX = touch.pageX - rect.x;
-                this.p1.move(newX);
-                dataConnection.send(['movepad', canvas.width - newX]);
+                this.p1.move(newX, true);
             }
         });
     }
@@ -297,7 +302,7 @@ class Game {
             else {
                 this.p2.points += 1;
                 document.getElementById("player2Score").innerHTML = this.p2.name + ": " + this.p2.points;
-                dataConnection.send(['scoreupdate', this.p2.points, this.p1.points]);
+                dataConnection.send(['scoreupdate', this.p2.points, this.p1.points, this.ball.speed]);
                 this.p1.ready = false;
                 this.p2.ready = false;
                 this.ball.reset();
@@ -319,7 +324,7 @@ class Game {
             else {
                 this.p1.points += 1;
                 document.getElementById("player1Score").innerHTML = this.p1.name + ": " + this.p1.points;
-                dataConnection.send(['scoreupdate', this.p2.points, this.p1.points]);
+                dataConnection.send(['scoreupdate', this.p2.points, this.p1.points, this.ball.speed]);
                 this.p1.ready = false;
                 this.p2.ready = false;
                 this.ball.reset();
