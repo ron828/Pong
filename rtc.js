@@ -140,6 +140,7 @@ class Ball {
         this.radius = 4;
         this.dx = 3;
         this.dy = 3;
+        this.speed = 4;
     }
 
     draw() {
@@ -151,7 +152,7 @@ class Ball {
     }
 
     move(x, y) {
-        ctx.clearRect(this.x - this.radius, this.y - this.radius, this.radius * 2, this.radius * 2);
+        ctx.clearRect((this.x - this.radius) - 1, (this.y - this.radius) - 1, (this.radius * 2) + 2, (this.radius * 2) + 2);
         this.x = x;
         this.y = y;
         this.draw();
@@ -159,8 +160,8 @@ class Ball {
 
     reset() {
         this.move(canvas.width / 2, canvas.height / 2);
-        this.dx = 2;
-        this.dy = 2;
+        this.dx = 3;
+        this.dy = 3;
     }
 }
 
@@ -276,7 +277,12 @@ class Game {
         var pad2RightEdge = this.p2.x + (this.p2.width / 2)
         if (this.ball.y + this.ball.dy > (canvas.height - (this.ball.radius + this.p1.height))) {
             if (ballLeftEdge <= pad1RightEdge && ballRightEdge >= pad1LeftEdge) {
-                this.ball.dy = -this.ball.dy;
+                let collidePoint = (this.ball.x - this.p1.x);
+                collidePoint = collidePoint / (this.p1.width/2);
+                let angleRad = (Math.PI/4) * collidePoint;
+                this.ball.dy = -Math.cos(angleRad) * this.ball.speed;
+                this.ball.dx = Math.sin(angleRad) * this.ball.speed;
+                this.ball.speed += 0.1;
             }
             else {
                 this.p2.points += 1;
@@ -292,7 +298,12 @@ class Game {
 
         if (this.ball.y + this.ball.dy < (this.ball.radius + this.p2.height)) {
             if (ballLeftEdge <= pad2RightEdge && ballRightEdge >= pad2LeftEdge) {
-                this.ball.dy = -this.ball.dy;
+                let collidePoint = (this.ball.x - this.p2.x);
+                collidePoint = collidePoint / (this.p2.width/2);
+                let angleRad = (Math.PI/4) * collidePoint;
+                this.ball.dy = Math.cos(angleRad) * this.ball.speed;
+                this.ball.dx = Math.sin(angleRad) * this.ball.speed;
+                this.ball.speed += 0.1;
             }
             else {
                 this.p1.points += 1;
