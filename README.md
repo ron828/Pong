@@ -1,6 +1,8 @@
 # Pong
  Two players pong over WebRTC
  
+ [Live demo](https://ron828.com/pong)
+ 
  ## How to play
  Two players needed on two different devices.
  
