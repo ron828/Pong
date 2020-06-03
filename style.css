@@ -22,7 +22,7 @@ body {
     background-color: #212c3d;
 }
 
-#connectionSpinner, #registrationSpinner, #readySpinner, #gameOverContainer {
+#connectionSpinner, #registrationSpinner, #readySpinner, #gameOverContainer, #restartSpinner {
     display: none;
 }
 

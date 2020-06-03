@@ -1,38 +1,61 @@
 registercontainer = document.getElementById("registerContainer");
+myIdForm = document.getElementById("myIdForm");
+registerButton = document.getElementById("registerButton");
+registrationSpinner = document.getElementById("registrationSpinner");
+
 connectContainer = document.getElementById("connectContainer");
-mainContainer = document.getElementById("mainContainer");
-myIdField = document.getElementById("myIdForm");
 otherIdForm = document.getElementById("otherIdForm");
 otherIdFormLabel = document.getElementById("otherIdFormLabel");
+connectButton = document.getElementById("connectButton");
+connectionSpinner = document.getElementById("connectionSpinner");
 
-myIdField.addEventListener("keydown", function (event) {
+mainContainer = document.getElementById("mainContainer");
+readySpinner = document.getElementById("readySpinner");
+readyContainer = document.getElementById("readyContainer");
+gameOverContainer = document.getElementById("gameOverContainer");
+player1Score = document.getElementById("player1Score");
+player2Score = document.getElementById("player2Score");
+winnerLabel = document.getElementById("winnerLabel");
+readyGameButton = document.getElementById("readyButton");
+nextRoundButton = document.getElementById("nextRoundButton");
+restartSpinner = document.getElementById("restartSpinner");
+canvas = document.getElementById("myCanvas");
+ctx = canvas.getContext("2d");
+
+peer = null;
+dataConnection = null;
+
+game = null;
+reloading = false;
+
+readyGameButton.addEventListener("click", () => { game.ready(); });
+nextRoundButton.addEventListener("click", () => { game.restart(); })
+
+myIdForm.addEventListener("keydown", function (event) {
     if (event.keyCode === 13) {
         event.preventDefault();
-        document.getElementById("registerButton").click();
+        registerButton.click();
     }
 });
 
 otherIdForm.addEventListener("keydown", function (event) {
     if (event.keyCode === 13) {
         event.preventDefault();
-        document.getElementById("connectButton").click();
+        connectButton.click();
     }
 });
 
-var peer = null;
-var dataConnection = null;
-
 function register() {
-    if (!myIdField.value) {
+    if (!myIdForm.value) {
         alert("Name is blank!");
         return;
     }
 
-    document.getElementById("myIdForm").disabled = true;
-    document.getElementById("registerButton").disabled = true;
-    document.getElementById("registrationSpinner").style.display = "block";
+    myIdForm.disabled = true;
+    registerButton.disabled = true;
+    registrationSpinner.style.display = "block";
 
-    peer = new Peer(myIdField.value, {
+    peer = new Peer(myIdForm.value, {
         host: 'ron828.com',
         port: 9000,
         secure: true,
@@ -53,10 +76,10 @@ function register() {
         }
         reloading = true;
         alert(err);
-        console.log(err);
         location.reload();
     });
 
+    // Triggers only at the party which did NOT initiate the connection
     peer.on('connection', (conn) => {
         dataConnection = conn;
         connectContainer.style.display = "none";
@@ -65,6 +88,7 @@ function register() {
     });
 }
 
+// Triggers only at the party which initiated the connection
 function connect() {
     if (!otherIdForm.value) {
         alert("Name is blank!");
@@ -72,8 +96,8 @@ function connect() {
     }
 
     otherIdForm.disabled = true;
-    document.getElementById("connectButton").disabled = true;
-    document.getElementById("connectionSpinner").style.display = "block";
+    connectButton.disabled = true;
+    connectionSpinner.style.display = "block";
     dataConnection = peer.connect(otherIdForm.value);
     initConnection();
 
@@ -81,8 +105,7 @@ function connect() {
         connectContainer.style.display = "none";
         mainContainer.style.display = "flex";
         game = new Game();
-        game.master = true;
-        game.init();
+        game.controller = true;
         dataConnection.send(['init']);
     });
 }
@@ -99,10 +122,36 @@ function initConnection() {
     });
 
     dataConnection.on('data', (data) => {
+
+        /*
+            Data from controller to minion
+        */
         if (data[0] == 'init') {
             game = new Game();
-            game.init();
         }
+        else if (data[0] == 'starting') {
+            readySpinner.style.display = 'none';
+            readyGameButton.disabled = true;
+            readyContainer.style.display = 'none';
+        }
+        else if (data[0] == 'restarting') {
+            restartSpinner.style.display = 'none';
+            nextRoundButton.disabled = true;
+            gameOverContainer.style.display = 'none';
+        }
+        else if (data[0] == 'moveball') {
+            game.ball.move(data[1], data[2]);
+            dataConnection.send(['ballmoved']);
+        }
+        else if (data[0] == 'scoreupdate') {
+            game.p1.points = data[1];
+            game.p2.points = data[2];
+            game.pointScored();
+        }
+
+        /*
+            Data from minion to controller
+        */
         else if (data[0] == 'ready') {
             game.p2.ready = true;
             if (game.p1.ready) {
@@ -110,13 +159,14 @@ function initConnection() {
                 game.start();
             }
         }
-        else if (data[0] == 'starting') {
-            document.getElementById('readySpinner').style.display = 'none';
-            readyGameButton.disabled = true;
-            document.getElementById("readyContainer").style.display = "none";
-        }
         else if (data[0] == 'restart') {
-            game.restart();
+            game.p2.restart = true;
+            if (game.p1.restart) {
+                restartSpinner.style.display = 'none';
+                nextRoundButton.disabled = true;
+                gameOverContainer.style.display = 'none';
+                dataConnection.send(['restarting']);
+            }
         }
         else if (data[0] == 'ballmoved') {
             if (game.paused) {
@@ -124,30 +174,12 @@ function initConnection() {
             }
             setTimeout(() => { game.moveBall(); }, 10);
         }
+
+        /*
+            Bidirectional data
+        */
         else if (data[0] == 'movepad') {
             game.p2.move(data[1]);
-        }
-        else if (data[0] == 'moveball') {
-            game.ball.move(data[1], data[2]);
-            dataConnection.send(['ballmoved']);
-        }
-
-        else if (data[0] == 'scoreupdate') {
-            game.p1.points = data[1];
-            game.p2.points = data[2];
-            game.ball.speed = data[3];
-            document.getElementById("player1Score").innerHTML = game.p1.name + ": " + game.p1.points;
-            document.getElementById("player2Score").innerHTML = game.p2.name + ": " + game.p2.points;
-            game.p1.ready = false;
-            game.p2.ready = false;
-            readyGameButton.disabled = false;
-            document.getElementById("readyContainer").style.display = "flex";
-
-            if (game.p1.points == 5 || game.p2.points == 5) {
-                document.getElementById("gameOverContainer").style.display = "flex";
-                document.getElementById("winnerLabel").innerHTML = (game.p1.points == 5 ? game.p1.name : game.p2.name);
-                document.getElementById("winnerLabel").innerHTML += " wins this round!";
-            }
         }
     });
 }
@@ -160,7 +192,7 @@ class Ball {
         this.radius = 4;
         this.speed = 7;
         this.dx = 0;
-        this.dy = Math.random() < 0.5 ? 1 : -1;
+        this.dy = Math.random() < 0.5 ? 5 : -5;
     }
 
     draw() {
@@ -181,13 +213,15 @@ class Ball {
     reset() {
         this.move(canvas.width / 2, canvas.height / 2);
         this.dx = 0;
-        this.dy = Math.random() < 0.5 ? 1 : -1;
+        this.dy = Math.random() < 0.5 ? 5 : -5;
+        this.speed = 7;
     }
 }
 
 class Player {
     constructor(location) {
         this.ready = false;
+        this.restart = false;
         this.height = 6;
         this.width = 60;
         this.color = "#ffffff";
@@ -242,7 +276,15 @@ class Game {
         this.p2 = new Player("up");
         this.ball = new Ball();
         this.paused = true;
-        this.master = false;
+        this.controller = false;
+        this.pointsPerRound = 5;
+
+        this.p1.draw();
+        this.p2.draw();
+        this.ball.draw();
+
+        player1Score.innerHTML = this.p1.name + ": " + this.p1.points;
+        player2Score.innerHTML = this.p2.name + ": " + this.p2.points;
 
         mainContainer.addEventListener('mousemove', e => {
             var rect = canvas.getBoundingClientRect();
@@ -260,51 +302,74 @@ class Game {
         });
     }
 
-    init() {
-        this.p1.draw();
-        this.p2.draw();
-        this.ball.draw();
-        this.p1.ready = false;
-        this.p2.ready = false;
-        reloading = false;
-        document.getElementById("player1Score").innerHTML = this.p1.name + ": " + this.p1.points;
-        document.getElementById("player2Score").innerHTML = this.p2.name + ": " + this.p2.points;
-        readyGameButton.disabled = false;
-    }
-
     ready() {
-        document.getElementById('readySpinner').style.display = 'block';
+        readySpinner.style.display = 'block';
         readyGameButton.disabled = true;
         this.p1.ready = true;
-        if (this.p2.ready) {
+        if (this.p2.ready) { // p2 never ready for minion, so only controller can get here
             game.start();
             dataConnection.send(['starting']);
         }
-        else if (!game.master) {
+        else if (!game.controller) {
             dataConnection.send(['ready']);
         }
     }
 
     start() {
-        this.init();
         this.paused = false;
-        document.getElementById('readySpinner').style.display = 'none';
+        readySpinner.style.display = 'none';
         readyGameButton.disabled = true;
-        document.getElementById("readyContainer").style.display = "none";
+        readyContainer.style.display = "none";
         this.moveBall();
     }
 
-    restart(notify) {
-        document.getElementById("gameOverContainer").style.display = "none";
+    pointScored() {
+        player1Score.innerHTML = game.p1.name + ": " + game.p1.points;
+        player2Score.innerHTML = game.p2.name + ": " + game.p2.points;
+        this.p1.ready = false;
+        this.p2.ready = false;
+        this.paused = true;
+        readyGameButton.disabled = false;
+        readyContainer.style.display = "flex";
+        this.ball.reset();
+
+        if (this.p1.points == this.pointsPerRound || this.p2.points == this.pointsPerRound) {
+            gameOverContainer.style.display = "flex";
+            winnerLabel.innerHTML = (this.p1.points == this.pointsPerRound ? this.p1.name : this.p2.name);
+            winnerLabel.innerHTML += " wins this round!";
+        }
+    }
+
+    restart() {
+        restartSpinner.style.display = 'block';
+        nextRoundButton.disabled = true;
+        this.p1.restart = true;
         this.p1.points = 0;
         this.p2.points = 0;
         this.ball.speed = 7;
-        document.getElementById("player1Score").innerHTML = this.p1.name + ": " + this.p1.points;
-        document.getElementById("player2Score").innerHTML = this.p2.name + ": " + this.p2.points;
+        player1Score.innerHTML = this.p1.name + ": " + this.p1.points;
+        player2Score.innerHTML = this.p2.name + ": " + this.p2.points;
 
-        if (notify) {
+        if (this.p2.restart) { // p2.restart is nevert true for minion, so only controller can get here
+            restartSpinner.style.display = 'none';
+            nextRoundButton.disabled = true;
+            gameOverContainer.style.display = 'none';
+            dataConnection.send(['restarting']);
+        }
+
+        if (!game.controller) {
             dataConnection.send(['restart']);
-        }   
+        }
+    }
+
+    collision(player) {
+        let collidePoint = (this.ball.x - player.x);
+        collidePoint = collidePoint / (player.width / 2);
+        let angleRad = (Math.PI / 4) * collidePoint;
+        let direction = (player.y == 0) ? 1 : -1;
+        this.ball.dy = direction * Math.cos(angleRad) * this.ball.speed;
+        this.ball.dx = Math.sin(angleRad) * this.ball.speed;
+        this.ball.speed += 0.5 + ((this.p1.points + this.p2.points) / (this.pointsPerRound * 2));
     }
 
     moveBall() {
@@ -316,55 +381,23 @@ class Game {
         var pad2RightEdge = this.p2.x + (this.p2.width / 2)
         if (this.ball.y + this.ball.dy > (canvas.height - (this.ball.radius + this.p1.height))) {
             if (ballLeftEdge <= pad1RightEdge && ballRightEdge >= pad1LeftEdge) {
-                let collidePoint = (this.ball.x - this.p1.x);
-                collidePoint = collidePoint / (this.p1.width/2);
-                let angleRad = (Math.PI/4) * collidePoint;
-                this.ball.dy = -Math.cos(angleRad) * this.ball.speed;
-                this.ball.dx = Math.sin(angleRad) * this.ball.speed;
-                this.ball.speed += 0.5;
+                this.collision(this.p1);
             }
             else {
                 this.p2.points += 1;
-                document.getElementById("player2Score").innerHTML = this.p2.name + ": " + this.p2.points;
                 dataConnection.send(['scoreupdate', this.p2.points, this.p1.points, this.ball.speed]);
-                this.p1.ready = false;
-                this.p2.ready = false;
-                this.ball.reset();
-                this.paused = true;
-                readyGameButton.disabled = false;
-                document.getElementById("readyContainer").style.display = "flex";
-                if (game.p1.points == 5 || game.p2.points == 5) {
-                    document.getElementById("gameOverContainer").style.display = "flex";
-                    document.getElementById("winnerLabel").innerHTML = (game.p1.points == 5 ? game.p1.name : game.p2.name);
-                    document.getElementById("winnerLabel").innerHTML += " wins this round!";
-                }
+                this.pointScored();
             }
         }
 
         if (this.ball.y + this.ball.dy < (this.ball.radius + this.p2.height)) {
             if (ballLeftEdge <= pad2RightEdge && ballRightEdge >= pad2LeftEdge) {
-                let collidePoint = (this.ball.x - this.p2.x);
-                collidePoint = collidePoint / (this.p2.width/2);
-                let angleRad = (Math.PI/4) * collidePoint;
-                this.ball.dy = Math.cos(angleRad) * this.ball.speed;
-                this.ball.dx = Math.sin(angleRad) * this.ball.speed;
-                this.ball.speed += 0.5;
+                this.collision(this.p2);
             }
             else {
                 this.p1.points += 1;
-                document.getElementById("player1Score").innerHTML = this.p1.name + ": " + this.p1.points;
                 dataConnection.send(['scoreupdate', this.p2.points, this.p1.points, this.ball.speed]);
-                this.p1.ready = false;
-                this.p2.ready = false;
-                this.ball.reset();
-                this.paused = true;
-                readyGameButton.disabled = false;
-                document.getElementById("readyContainer").style.display = "flex";
-                if (game.p1.points == 5 || game.p2.points == 5) {
-                    document.getElementById("gameOverContainer").style.display = "flex";
-                    document.getElementById("winnerLabel").innerHTML = (game.p1.points == 5 ? game.p1.name : game.p2.name);
-                    document.getElementById("winnerLabel").innerHTML += " wins this round!";
-                }
+                this.pointScored();
             }
         }
 
@@ -378,11 +411,3 @@ class Game {
         dataConnection.send(['moveball', canvas.width - newX, canvas.height - newY]);
     }
 }
-
-var canvas = document.getElementById("myCanvas");
-var ctx = canvas.getContext("2d");
-var readyGameButton = document.getElementById("readyButton");
-var game;
-var reloading = false;
-readyGameButton.addEventListener("click", () => { game.ready(); });
-document.getElementById("nextRoundButton").addEventListener("click", () => { game.restart(true); })
