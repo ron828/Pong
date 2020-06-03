@@ -81,6 +81,7 @@ function connect() {
         connectContainer.style.display = "none";
         mainContainer.style.display = "flex";
         game = new Game();
+        game.master = true;
         game.init();
         dataConnection.send(['init']);
     });
@@ -159,7 +160,7 @@ class Ball {
         this.radius = 4;
         this.speed = 7;
         this.dx = 0;
-        this.dy = this.speed;      
+        this.dy = Math.random() < 0.5 ? 1 : -1;
     }
 
     draw() {
@@ -180,7 +181,7 @@ class Ball {
     reset() {
         this.move(canvas.width / 2, canvas.height / 2);
         this.dx = 0;
-        this.dy = this.speed;
+        this.dy = Math.random() < 0.5 ? 1 : -1;
     }
 }
 
@@ -241,8 +242,9 @@ class Game {
         this.p2 = new Player("up");
         this.ball = new Ball();
         this.paused = true;
+        this.master = false;
 
-        canvas.addEventListener('mousemove', e => {
+        mainContainer.addEventListener('mousemove', e => {
             var rect = canvas.getBoundingClientRect();
             var newX = e.clientX - rect.x;
             this.p1.move(newX, true);
@@ -278,7 +280,7 @@ class Game {
             game.start();
             dataConnection.send(['starting']);
         }
-        else {
+        else if (!game.master) {
             dataConnection.send(['ready']);
         }
     }
