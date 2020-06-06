@@ -277,7 +277,7 @@ class Game {
         this.ball = new Ball();
         this.paused = true;
         this.controller = false;
-        this.pointsPerRound = 5;
+        this.pointsPerRound = 1;
 
         this.p1.draw();
         this.p2.draw();
@@ -335,6 +335,9 @@ class Game {
 
         if (this.p1.points == this.pointsPerRound || this.p2.points == this.pointsPerRound) {
             gameOverContainer.style.display = "flex";
+            nextRoundButton.disabled = false;
+            this.p2.restart = false;
+            this.p1.restart = false;
             winnerLabel.innerHTML = (this.p1.points == this.pointsPerRound ? this.p1.name : this.p2.name);
             winnerLabel.innerHTML += " wins this round!";
         }
