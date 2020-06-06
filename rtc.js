@@ -277,7 +277,7 @@ class Game {
         this.ball = new Ball();
         this.paused = true;
         this.controller = false;
-        this.pointsPerRound = 1;
+        this.pointsPerRound = 5;
 
         this.p1.draw();
         this.p2.draw();
