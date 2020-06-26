@@ -372,7 +372,7 @@ class Game {
         let direction = (player.y == 0) ? 1 : -1;
         this.ball.dy = direction * Math.cos(angleRad) * this.ball.speed;
         this.ball.dx = Math.sin(angleRad) * this.ball.speed;
-        this.ball.speed += 0.5 + ((this.p1.points + this.p2.points) / (this.pointsPerRound * 2));
+        this.ball.speed += 0.5 + ((this.p1.points + this.p2.points) / (this.pointsPerRound));
     }
 
     moveBall() {
